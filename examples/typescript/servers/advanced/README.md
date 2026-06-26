@@ -67,6 +67,7 @@ cp .env-local .env
 and fill required environment variables:
 
 - `FACILITATOR_URL` - Facilitator endpoint URL
+- `CCD_ADDRESS` - Concordium account address to receive payments (optional for `all-networks`)
 - `EVM_ADDRESS` - Ethereum address to receive payments
 - `SVM_ADDRESS` - Solana address to receive payments (optional for `all-networks`)
 - `STELLAR_ADDRESS` - Stellar public address (starts with `G`) to receive payments
@@ -74,6 +75,10 @@ and fill required environment variables:
 - `KEETA_ADDRESS` - Keeta address (starts with `keeta_`) to receive payments
 
 > **Hedera Testnet:** Get testnet HBAR from the [Hedera Faucet](https://portal.hedera.com/faucet).
+>
+> **Concordium Testnet (CCD):** Open the Concordium Wallet for Web on Testnet, click the **Activity** icon, then **Request CCD** (gives 20,000 testnet CCD). Official guide: https://docs.concordium.com/en/mainnet/docs/plt/setup-guide/request-ccd.html
+>
+> **Concordium Testnet (PLT):** The `all-networks` example uses `EURR` as the default Concordium stablecoin parser for USD-style prices. There is no universal public faucet for arbitrary PLT symbols, so use an issuer-provided test distribution for `EURR` or request your own test PLT issuance: https://docs.concordium.com/en/mainnet/tutorials/plt/request-plt.html
 
 2. Install and build all packages from the typescript examples root:
 

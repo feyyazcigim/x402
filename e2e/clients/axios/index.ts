@@ -26,6 +26,8 @@ import { ExactTvmScheme } from "@x402/tvm/exact/client";
 import { toClientTvmSigner, TVM_PROVIDER_TONAPI, TVM_PROVIDER_TONCENTER } from "@x402/tvm";
 import { ExactAvmScheme as ExactAvmClientScheme } from "@x402/avm/exact/client";
 import { toClientAvmSigner } from "@x402/avm";
+import { ExactConcordiumScheme } from "@x402/concordium/exact/client";
+import { AccountAddress, buildBasicAccountSigner } from "@concordium/web-sdk";
 import * as KeetaNet from "@keetanetwork/keetanet-client";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
@@ -61,6 +63,9 @@ const uptoSchemeOptions: UptoEvmSchemeOptions | undefined = process.env.EVM_RPC_
   ? { rpcUrl: process.env.EVM_RPC_URL }
   : undefined;
 const svmSchemeOptions = process.env.SVM_RPC_URL ? { rpcUrl: process.env.SVM_RPC_URL } : undefined;
+
+const ccdPrivateKey = process.env.CCD_PRIVATE_KEY;
+const ccdAddress = process.env.CCD_ADDRESS;
 
 /**
  * Parses the TVM private key accepted by e2e env fixtures.
@@ -172,6 +177,18 @@ const client = new x402Client()
   .register("solana:*", new ExactSvmScheme(svmSigner, svmSchemeOptions))
   .registerV1("solana-devnet", new ExactSvmSchemeV1(svmSigner, svmSchemeOptions))
   .registerV1("solana", new ExactSvmSchemeV1(svmSigner, svmSchemeOptions));
+if (ccdPrivateKey && ccdAddress) {
+  client.register(
+    "ccd:*",
+    new ExactConcordiumScheme(
+      {
+        accountAddress: AccountAddress.fromBase58(ccdAddress),
+        signer: buildBasicAccountSigner(ccdPrivateKey),
+      },
+      process.env.CCD_GRPC_URL ? { grpcUrl: process.env.CCD_GRPC_URL } : undefined,
+    ),
+  );
+}
 if (aptosAccount) {
   client.register("aptos:*", new ExactAptosScheme(aptosAccount));
 }

@@ -663,6 +663,7 @@ async function runTest() {
   const serverSvmAddress = process.env.SERVER_SVM_ADDRESS;
   const serverAvmAddress = process.env.SERVER_AVM_ADDRESS;
   const serverAptosAddress = process.env.SERVER_APTOS_ADDRESS;
+  const serverCcdAddress = process.env.SERVER_CCD_ADDRESS;
   const serverHederaAddress = process.env.SERVER_HEDERA_ADDRESS;
   const serverKeetaAddress = process.env.SERVER_KEETA_ADDRESS;
   const serverStellarAddress = process.env.SERVER_STELLAR_ADDRESS;
@@ -671,6 +672,8 @@ async function runTest() {
   const clientSvmPrivateKey = process.env.CLIENT_SVM_PRIVATE_KEY;
   const clientAvmPrivateKey = process.env.CLIENT_AVM_PRIVATE_KEY;
   const clientAptosPrivateKey = process.env.CLIENT_APTOS_PRIVATE_KEY;
+  const clientCcdPrivateKey = process.env.CLIENT_CCD_PRIVATE_KEY;
+  const clientCcdAddress = process.env.CLIENT_CCD_ADDRESS;
   const clientHederaAccountId = process.env.CLIENT_HEDERA_ACCOUNT_ID;
   const clientHederaPrivateKey = process.env.CLIENT_HEDERA_PRIVATE_KEY;
   const clientKeetaMnemonic = process.env.CLIENT_KEETA_MNEMONIC;
@@ -680,6 +683,8 @@ async function runTest() {
   const facilitatorSvmPrivateKey = process.env.FACILITATOR_SVM_PRIVATE_KEY;
   const facilitatorAvmPrivateKey = process.env.FACILITATOR_AVM_PRIVATE_KEY;
   const facilitatorAptosPrivateKey = process.env.FACILITATOR_APTOS_PRIVATE_KEY;
+  const facilitatorCcdPrivateKey = process.env.FACILITATOR_CCD_PRIVATE_KEY;
+  const facilitatorCcdAddress = process.env.FACILITATOR_CCD_ADDRESS;
   const facilitatorHederaAccountId = process.env.FACILITATOR_HEDERA_ACCOUNT_ID;
   const facilitatorHederaPrivateKey = process.env.FACILITATOR_HEDERA_PRIVATE_KEY;
   const facilitatorKeetaMnemonic = process.env.FACILITATOR_KEETA_MNEMONIC;
@@ -765,6 +770,7 @@ async function runTest() {
   log(`   EVM Permit2 asset: ${evmPermit2Asset || '(missing)'} (${permit2AssetSource})`);
   log(`   SVM: ${networks.svm.name} (${networks.svm.caip2})`);
   log(`   APTOS: ${networks.aptos.name} (${networks.aptos.caip2})`);
+  log(`   CCD: ${networks.ccd.name} (${networks.ccd.caip2})`);
   log(`   HEDERA: ${networks.hedera.name} (${networks.hedera.caip2})`);
   log(`   KEETA: ${networks.keeta.name} (${networks.keeta.caip2})`);
   log(`   STELLAR: ${networks.stellar.name} (${networks.stellar.caip2})`);
@@ -805,6 +811,13 @@ async function runTest() {
       ['CLIENT_AVM_PRIVATE_KEY', clientAvmPrivateKey],
       ['FACILITATOR_AVM_PRIVATE_KEY', facilitatorAvmPrivateKey],
     ],
+    ccd: [
+      ['SERVER_CCD_ADDRESS', serverCcdAddress],
+      ['CLIENT_CCD_PRIVATE_KEY', clientCcdPrivateKey],
+      ['CLIENT_CCD_ADDRESS', clientCcdAddress],
+      ['FACILITATOR_CCD_PRIVATE_KEY', facilitatorCcdPrivateKey],
+      ['FACILITATOR_CCD_ADDRESS', facilitatorCcdAddress],
+    ],
     hedera: [
       ['SERVER_HEDERA_ADDRESS', serverHederaAddress],
       ['CLIENT_HEDERA_ACCOUNT_ID', clientHederaAccountId],
@@ -844,6 +857,21 @@ async function runTest() {
       if (!value) {
         missingRequiredEnv.add(name);
       }
+    }
+  }
+
+  // CCD: require private-key+address for client and facilitator.
+  if (selectedProtocolFamilies.has('ccd')) {
+    const clientHasKey = !!(clientCcdPrivateKey && clientCcdAddress);
+    const facilitatorHasKey = !!(facilitatorCcdPrivateKey && facilitatorCcdAddress);
+
+    if (clientHasKey) {
+      missingRequiredEnv.delete('CLIENT_CCD_PRIVATE_KEY');
+      missingRequiredEnv.delete('CLIENT_CCD_ADDRESS');
+    }
+    if (facilitatorHasKey) {
+      missingRequiredEnv.delete('FACILITATOR_CCD_PRIVATE_KEY');
+      missingRequiredEnv.delete('FACILITATOR_CCD_ADDRESS');
     }
   }
 
@@ -1173,6 +1201,7 @@ async function runTest() {
         EVM_NETWORK: networks.evm.caip2,
         SVM_NETWORK: networks.svm.caip2,
         APTOS_NETWORK: networks.aptos.caip2,
+        CCD_NETWORK: networks.ccd.caip2,
         KEETA_NETWORK: networks.keeta.caip2,
         STELLAR_NETWORK: networks.stellar.caip2,
         TVM_NETWORK: networks.tvm.caip2,
@@ -1237,6 +1266,8 @@ async function runTest() {
       svmPrivateKey: clientSvmPrivateKey!,
       avmPrivateKey: clientAvmPrivateKey || '',
       aptosPrivateKey: clientAptosPrivateKey || '',
+      ccdPrivateKey: clientCcdPrivateKey || '',
+      ccdAddress: clientCcdAddress || '',
       hederaAccountId: clientHederaAccountId || '',
       hederaPrivateKey: clientHederaPrivateKey || '',
       keetaClientMnemonic: clientKeetaMnemonic || '',
@@ -1248,6 +1279,8 @@ async function runTest() {
       evmRpcUrl: networks.evm.rpcUrl,
       svmNetwork: networks.svm.caip2,
       svmRpcUrl: networks.svm.rpcUrl,
+      ccdNetwork: networks.ccd.caip2,
+      ccdGrpcUrl: networks.ccd.rpcUrl,
       hederaNetwork: networks.hedera.caip2,
       hederaNodeUrl: networks.hedera.rpcUrl,
       keetaNetwork: networks.keeta.caip2,
@@ -1480,6 +1513,7 @@ async function runTest() {
     const facilitatorConfig = facilitatorName ? uniqueFacilitators.get(facilitatorName)?.config : undefined;
     const facilitatorSupportsAvm = facilitatorConfig?.protocolFamilies?.includes('avm') ?? false;
     const facilitatorSupportsAptos = facilitatorConfig?.protocolFamilies?.includes('aptos') ?? false;
+    const facilitatorSupportsCcd = facilitatorConfig?.protocolFamilies?.includes('ccd') ?? false;
     const facilitatorSupportsHedera = facilitatorConfig?.protocolFamilies?.includes('hedera') ?? false;
     const facilitatorSupportsKeeta = facilitatorConfig?.protocolFamilies?.includes('keeta') ?? false;
     const facilitatorSupportsStellar = facilitatorConfig?.protocolFamilies?.includes('stellar') ?? false;
@@ -1491,6 +1525,7 @@ async function runTest() {
       svmPayTo: serverSvmAddress!,
       avmPayTo: facilitatorSupportsAvm ? (serverAvmAddress || '') : '',
       aptosPayTo: facilitatorSupportsAptos ? (serverAptosAddress || '') : '',
+      ccdPayTo: facilitatorSupportsCcd ? (serverCcdAddress || '') : '',
       hederaPayTo:
         facilitatorSupportsHedera &&
           facilitatorHederaAccountId &&

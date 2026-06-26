@@ -12,6 +12,7 @@ import { config } from "dotenv";
 import { x402Client, wrapFetchWithPayment, x402HTTPClient } from "@x402/fetch";
 import { toClientAvmSigner } from "@x402/avm";
 import { ExactAvmScheme } from "@x402/avm/exact/client";
+import { ExactConcordiumScheme } from "@x402/concordium/exact/client";
 import { ExactEvmScheme } from "@x402/evm/exact/client";
 import { UptoEvmScheme } from "@x402/evm/upto/client";
 import { ExactSvmScheme } from "@x402/svm/exact/client";
@@ -24,6 +25,7 @@ import { ExactHederaScheme } from "@x402/hedera/exact/client";
 import { createClientHederaSigner, PrivateKey } from "@x402/hedera";
 import { toClientTvmSigner, TVM_PROVIDER_TONAPI, TVM_PROVIDER_TONCENTER } from "@x402/tvm";
 import { keyPairFromSeed, type KeyPair } from "@ton/crypto";
+import { buildBasicAccountSigner, AccountAddress } from "@concordium/web-sdk";
 import { base58 } from "@scure/base";
 import { createKeyPairSignerFromBytes } from "@solana/kit";
 import { privateKeyToAccount } from "viem/accounts";
@@ -33,6 +35,8 @@ config();
 
 // Configuration - optional per network
 const avmPrivateKey = process.env.AVM_PRIVATE_KEY as string | undefined;
+const ccdPrivateKey = process.env.CCD_PRIVATE_KEY as string | undefined;
+const ccdAddress = process.env.CCD_ADDRESS as string | undefined;
 const evmPrivateKey = process.env.EVM_PRIVATE_KEY as `0x${string}` | undefined;
 const keetaMnemonic = process.env.KEETA_MNEMONIC as string | undefined;
 const svmPrivateKey = process.env.SVM_PRIVATE_KEY as string | undefined;
@@ -75,7 +79,7 @@ function parseTvmKeyPair(privateKey: string): KeyPair {
 async function main(): Promise<void> {
   // Validate at least one private key is provided
   if (
-    !avmPrivateKey &&
+    !(ccdPrivateKey && ccdAddress) &&
     !evmPrivateKey &&
     !keetaMnemonic &&
     !svmPrivateKey &&
@@ -84,7 +88,7 @@ async function main(): Promise<void> {
     !tvmPrivateKey
   ) {
     console.error(
-      "❌ At least one of AVM_PRIVATE_KEY, EVM_PRIVATE_KEY, KEETA_MNEMONIC, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY, or TVM_PRIVATE_KEY is required",
+      "❌ At least one of AVM_PRIVATE_KEY, CCD_PRIVATE_KEY + CCD_ADDRESS, EVM_PRIVATE_KEY, KEETA_MNEMONIC, SVM_PRIVATE_KEY, STELLAR_PRIVATE_KEY, HEDERA_ACCOUNT_ID + HEDERA_PRIVATE_KEY, or TVM_PRIVATE_KEY is required",
     );
     process.exit(1);
   }
@@ -97,6 +101,16 @@ async function main(): Promise<void> {
     const avmSigner = toClientAvmSigner(avmPrivateKey);
     client.register("algorand:*", new ExactAvmScheme(avmSigner));
     console.log(`Initialized AVM account: ${avmSigner.address}`);
+  }
+
+  // Register Concordium scheme if private key and address are provided
+  if (ccdPrivateKey && ccdAddress) {
+    const signer = {
+      accountAddress: AccountAddress.fromBase58(ccdAddress),
+      signer: buildBasicAccountSigner(ccdPrivateKey),
+    };
+    client.register("ccd:*", new ExactConcordiumScheme(signer));
+    console.log(`Initialized CCD account: ${ccdAddress}`);
   }
 
   // Register EVM scheme if private key is provided
