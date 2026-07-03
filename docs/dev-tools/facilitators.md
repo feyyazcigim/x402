@@ -18,6 +18,6 @@ The table below lists selected production options; it is not an exhaustive catal
 | [Mogami Facilitator](https://facilitator.mogami.tech) | Free, developer-focused facilitator for Base with optional self-hosted Docker deployment |
 | [PayAI Facilitator](https://facilitator.payai.network) | Multi-network facilitator supporting all tokens. No API keys required |
 | [Polygon Facilitator](https://docs.polygon.technology/payment-services/agentic-payments/x402/intro/) | Production-grade x402 facilitator for Polygon Mainnet and Amoy testnet |
-| [Solvador](https://solvador.com) | Multi-network facilitator with broad mainnet coverage across EVM and Solana, supporting multiple schemes and extensions |
+| [Solvador](https://solvador.com) | Multi-network facilitator with broad mainnet coverage across EVM plus Solana and NEAR, supporting multiple schemes and extensions |
 
 For testnet development, the [x402.org facilitator](/core-concepts/network-and-token-support#x402org-facilitator) requires no setup. It is not intended for mainnet routes; use a production facilitator or self-hosted facilitator for production networks.
